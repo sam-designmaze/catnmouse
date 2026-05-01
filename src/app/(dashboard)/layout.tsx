@@ -6,6 +6,7 @@ import { TenantProvider } from "@/components/branding/TenantProvider";
 import { TenantSidebar } from "@/components/layout/TenantSidebar";
 import { SessionWrapper } from "@/components/layout/SessionWrapper";
 import { GradientBg } from "@/components/branding/GradientBg";
+import { ToastProvider } from "@/components/ui/toast";
 
 export default async function DashboardLayout({
   children,
@@ -21,16 +22,18 @@ export default async function DashboardLayout({
   if (!tenant) redirect("/login");
 
   return (
-    <SessionWrapper>
-      <TenantProvider config={tenant}>
-        <div className="flex h-screen overflow-hidden">
-          <GradientBg color={tenant.primaryColor} />
-          <TenantSidebar />
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {children}
+    <ToastProvider>
+      <SessionWrapper>
+        <TenantProvider config={tenant}>
+          <div className="flex h-screen overflow-hidden">
+            <GradientBg color={tenant.primaryColor} />
+            <TenantSidebar />
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {children}
+            </div>
           </div>
-        </div>
-      </TenantProvider>
-    </SessionWrapper>
+        </TenantProvider>
+      </SessionWrapper>
+    </ToastProvider>
   );
 }

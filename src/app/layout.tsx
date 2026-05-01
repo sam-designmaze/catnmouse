@@ -36,7 +36,7 @@ export default async function RootLayout({
           : undefined
       }
     >
-      <body className="min-h-screen">
+      <body className="min-h-screen" suppressHydrationWarning>
         <TenantProvider config={tenant}>{children}</TenantProvider>
       </body>
     </html>

@@ -19,6 +19,9 @@ export default function LoginPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [tenantSubdomain, setTenantSubdomain] = useState(
+    process.env.NEXT_PUBLIC_DEFAULT_TENANT_SUBDOMAIN ?? "domainshighway"
+  );
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -30,8 +33,7 @@ export default function LoginPage() {
       {
         email,
         password,
-        tenantSubdomain:
-          process.env.NEXT_PUBLIC_DEFAULT_TENANT_SUBDOMAIN ?? "domainshighway",
+        tenantSubdomain: isAdmin ? undefined : tenantSubdomain,
         redirect: false,
       }
     );
@@ -93,6 +95,21 @@ export default function LoginPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {!isAdmin && (
+          <div>
+            <Label htmlFor="tenant">Tenant/Organization</Label>
+            <select
+              id="tenant"
+              value={tenantSubdomain}
+              onChange={(e) => setTenantSubdomain(e.target.value)}
+              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[var(--tenant-primary)]"
+            >
+              <option value="domainshighway">Domains Highway</option>
+              <option value="webflow">WebFlow Agency</option>
+              <option value="saasaccel">SaaS Accelerator</option>
+            </select>
+          </div>
+        )}
         <div>
           <Label htmlFor="email">Email</Label>
           <Input
