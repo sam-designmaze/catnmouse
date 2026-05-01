@@ -1,0 +1,191 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id           String   @id @default(cuid())
+  name         String
+  subdomain    String   @unique
+  logoUrl      String?
+  primaryColor String   @default("#06b6d4")
+  platformName String   @default("Wayfront")
+  status       String   @default("ACTIVE")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  users         User[]
+  clients       Client[]
+  orders        Order[]
+  invoices      Invoice[]
+  subscriptions Subscription[]
+  coupons       Coupon[]
+  referrals     Referral[]
+  services      Service[]
+  forms         Form[]
+  billing       TenantBilling?
+}
+
+model TenantBilling {
+  id              String    @id @default(cuid())
+  tenantId        String    @unique
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  plan            String    @default("STARTER")
+  monthlyRate     Float     @default(99)
+  status          String    @default("ACTIVE")
+  nextBillingDate DateTime
+  lastPaymentDate DateTime?
+  paymentMethod   String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      String   @default("SUPPORT")
+  avatarUrl String?
+  createdAt DateTime @default(now())
+}
+
+model TenantAnalytics {
+  id            String   @id @default(cuid())
+  tenantId      String
+  month         String
+  activeUsers   Int      @default(0)
+  ordersCount   Int      @default(0)
+  invoicesCount Int      @default(0)
+  revenue       Float    @default(0)
+  createdAt     DateTime @default(now())
+
+  @@unique([tenantId, month])
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String
+  name      String?
+  password  String
+  role      String   @default("MEMBER")
+  avatarUrl String?
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([email, tenantId])
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  status    String   @default("ACTIVE")
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  orders   Order[]
+  invoices Invoice[]
+}
+
+model Order {
+  id          String   @id @default(cuid())
+  orderNumber String
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id])
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  status      String   @default("PENDING")
+  totalAmount Float    @default(0)
+  serviceId   String?
+  service     Service? @relation(fields: [serviceId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Invoice {
+  id            String   @id @default(cuid())
+  invoiceNumber String
+  clientId      String
+  client        Client   @relation(fields: [clientId], references: [id])
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  status        String   @default("DRAFT")
+  amount        Float
+  dueDate       DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Subscription {
+  id        String   @id @default(cuid())
+  name      String
+  price     Float
+  interval  String   @default("MONTHLY")
+  status    String   @default("ACTIVE")
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model Coupon {
+  id         String    @id @default(cuid())
+  code       String
+  discount   Float
+  type       String    @default("PERCENTAGE")
+  usageLimit Int?
+  usageCount Int       @default(0)
+  expiresAt  DateTime?
+  active     Boolean   @default(true)
+  tenantId   String
+  tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
+
+  @@unique([code, tenantId])
+}
+
+model Referral {
+  id            String   @id @default(cuid())
+  referrerEmail String
+  refereeEmail  String?
+  code          String   @unique
+  status        String   @default("PENDING")
+  reward        Float    @default(0)
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+}
+
+model Service {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  price       Float
+  active      Boolean  @default(true)
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orders Order[]
+}
+
+model Form {
+  id        String   @id @default(cuid())
+  name      String
+  fields    String
+  active    Boolean  @default(true)
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
