@@ -54,11 +54,13 @@ export async function PATCH(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const { name, description, price, active } = await request.json();
+  const { name, description, category, subcategory, price, active } = await request.json();
 
   const updateData: any = {};
   if (name) updateData.name = name;
   if (description !== undefined) updateData.description = description || null;
+  if (category !== undefined) updateData.category = category;
+  if (subcategory !== undefined) updateData.subcategory = subcategory || null;
   if (price !== undefined) {
     const parsedPrice = parseFloat(String(price));
     if (isNaN(parsedPrice) || parsedPrice < 0) {

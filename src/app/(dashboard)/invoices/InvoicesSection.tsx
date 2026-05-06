@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { GlassCard } from "@/components/branding/GlassCard";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Link as LinkIcon } from "lucide-react";
 
 interface Invoice {
   id: string;
@@ -28,24 +28,33 @@ interface Client {
   email: string;
 }
 
+interface Service {
+  id: string;
+  name: string;
+  price: number;
+}
+
 interface InvoicesSectionProps {
   initialInvoices: Invoice[];
   clients: Client[];
+  services: Service[];
 }
 
-export function InvoicesSection({ initialInvoices, clients }: InvoicesSectionProps) {
+export function InvoicesSection({ initialInvoices, clients, services }: InvoicesSectionProps) {
   const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
   const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Invoice | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Invoice | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [paymentLinking, setPaymentLinking] = useState<string | null>(null);
 
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [clientId, setClientId] = useState("");
   const [amount, setAmount] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [status, setStatus] = useState("DRAFT");
+  const [serviceId, setServiceId] = useState("");
 
   const { addToast } = useToast();
 
@@ -161,6 +170,30 @@ export function InvoicesSection({ initialInvoices, clients }: InvoicesSectionPro
     }
   }
 
+  async function handleCreatePaymentLink(invoice: Invoice) {
+    setPaymentLinking(invoice.id);
+
+    try {
+      const res = await fetch(`/api/invoices/${invoice.id}/pay`, {
+        method: "POST",
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        addToast(data.error ?? "Failed to create payment link", "error");
+        return;
+      }
+
+      const { url } = await res.json();
+      await navigator.clipboard.writeText(url);
+      addToast("Payment link copied to clipboard", "success");
+    } catch (error) {
+      addToast("Failed to create payment link", "error");
+    } finally {
+      setPaymentLinking(null);
+    }
+  }
+
   const invoiceStatusVariant: Record<string, "success" | "warning" | "neutral"> = {
     PAID: "success",
     SENT: "neutral",
@@ -233,6 +266,17 @@ export function InvoicesSection({ initialInvoices, clients }: InvoicesSectionPro
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
+                        {i.status === "DRAFT" && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleCreatePaymentLink(i)}
+                            disabled={paymentLinking === i.id}
+                            title="Create payment link for client"
+                          >
+                            <LinkIcon size={13} />
+                          </Button>
+                        )}
                         <Button
                           size="sm"
                           variant="ghost"
@@ -287,11 +331,22 @@ export function InvoicesSection({ initialInvoices, clients }: InvoicesSectionPro
               value={clientId}
               onChange={(e) => setClientId(e.target.value)}
               required
-              className="w-full bg-white/8 border border-white/15 rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[var(--tenant-primary)] focus:ring-1 focus:ring-[var(--tenant-primary)]/50 transition-all"
+              style={{
+                backgroundColor: '#1f2937',
+                borderColor: '#374151',
+                color: '#f3f4f6'
+              }}
+              className="w-full border rounded-xl px-3 py-2.5 text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[var(--tenant-primary)]/50 transition-all"
             >
-              <option value="">Select a client</option>
+              <option value="" style={{ backgroundColor: '#1f2937', color: '#f3f4f6' }}>
+                Select a client
+              </option>
               {clients.map((c) => (
-                <option key={c.id} value={c.id}>
+                <option
+                  key={c.id}
+                  value={c.id}
+                  style={{ backgroundColor: '#1f2937', color: '#f3f4f6' }}
+                >
                   {c.name}
                 </option>
               ))}
@@ -313,6 +368,42 @@ export function InvoicesSection({ initialInvoices, clients }: InvoicesSectionPro
           </div>
 
           <div>
+            <Label htmlFor="invoice-service">Service (Optional)</Label>
+            <select
+              id="invoice-service"
+              value={serviceId}
+              onChange={(e) => {
+                setServiceId(e.target.value);
+                if (e.target.value) {
+                  const service = services.find((s) => s.id === e.target.value);
+                  if (service) {
+                    setAmount(service.price.toString());
+                  }
+                }
+              }}
+              style={{
+                backgroundColor: '#1f2937',
+                borderColor: '#374151',
+                color: '#f3f4f6'
+              }}
+              className="w-full border rounded-xl px-3 py-2.5 text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[var(--tenant-primary)]/50 transition-all"
+            >
+              <option value="" style={{ backgroundColor: '#1f2937', color: '#f3f4f6' }}>
+                Select a service
+              </option>
+              {services.map((s) => (
+                <option
+                  key={s.id}
+                  value={s.id}
+                  style={{ backgroundColor: '#1f2937', color: '#f3f4f6' }}
+                >
+                  {s.name} - ${s.price.toFixed(2)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
             <Label htmlFor="invoice-duedate">Due Date *</Label>
             <Input
               id="invoice-duedate"
@@ -329,12 +420,17 @@ export function InvoicesSection({ initialInvoices, clients }: InvoicesSectionPro
               id="invoice-status"
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="w-full bg-white/8 border border-white/15 rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[var(--tenant-primary)] focus:ring-1 focus:ring-[var(--tenant-primary)]/50 transition-all"
+              style={{
+                backgroundColor: '#1f2937',
+                borderColor: '#374151',
+                color: '#f3f4f6'
+              }}
+              className="w-full border rounded-xl px-3 py-2.5 text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[var(--tenant-primary)]/50 transition-all"
             >
-              <option value="DRAFT">DRAFT</option>
-              <option value="SENT">SENT</option>
-              <option value="PAID">PAID</option>
-              <option value="OVERDUE">OVERDUE</option>
+              <option value="DRAFT" style={{ backgroundColor: '#1f2937', color: '#f3f4f6' }}>DRAFT</option>
+              <option value="SENT" style={{ backgroundColor: '#1f2937', color: '#f3f4f6' }}>SENT</option>
+              <option value="PAID" style={{ backgroundColor: '#1f2937', color: '#f3f4f6' }}>PAID</option>
+              <option value="OVERDUE" style={{ backgroundColor: '#1f2937', color: '#f3f4f6' }}>OVERDUE</option>
             </select>
           </div>
 

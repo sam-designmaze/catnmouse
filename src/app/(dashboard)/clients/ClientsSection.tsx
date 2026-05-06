@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { GlassCard } from "@/components/branding/GlassCard";
 import { formatDate } from "@/lib/utils";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Search } from "lucide-react";
 
 interface Client {
   id: string;
@@ -27,6 +27,7 @@ interface ClientsSectionProps {
 
 export function ClientsSection({ initialClients }: ClientsSectionProps) {
   const [clients, setClients] = useState<Client[]>(initialClients);
+  const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Client | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Client | null>(null);
@@ -37,6 +38,12 @@ export function ClientsSection({ initialClients }: ClientsSectionProps) {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [status, setStatus] = useState("ACTIVE");
+
+  const filteredClients = clients.filter((c) =>
+    c.name.toLowerCase().includes(search.toLowerCase()) ||
+    c.email.toLowerCase().includes(search.toLowerCase()) ||
+    (c.phone && c.phone.includes(search))
+  );
 
   const { addToast } = useToast();
 
@@ -134,12 +141,23 @@ export function ClientsSection({ initialClients }: ClientsSectionProps) {
 
   return (
     <>
-      <div className="flex items-center justify-between mb-6">
-        <p className="text-gray-400 text-sm">{clients.length} total clients</p>
-        <Button size="sm" onClick={openNew}>
-          <Plus size={15} />
-          New Client
-        </Button>
+      <div className="mb-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <p className="text-gray-400 text-sm">{clients.length} total clients</p>
+          <Button size="sm" onClick={openNew}>
+            <Plus size={15} />
+            New Client
+          </Button>
+        </div>
+        <div className="relative">
+          <Search size={16} className="absolute left-3 top-3 text-gray-500" />
+          <Input
+            placeholder="Search by name, email, or phone..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10"
+          />
+        </div>
       </div>
 
       <GlassCard padding="none">
@@ -160,17 +178,17 @@ export function ClientsSection({ initialClients }: ClientsSectionProps) {
               </tr>
             </thead>
             <tbody>
-              {clients.length === 0 ? (
+              {filteredClients.length === 0 ? (
                 <tr>
                   <td
                     colSpan={7}
                     className="px-6 py-12 text-center text-gray-500"
                   >
-                    No clients yet
+                    {search ? "No clients match your search" : "No clients yet"}
                   </td>
                 </tr>
               ) : (
-                clients.map((c) => (
+                filteredClients.map((c) => (
                   <tr
                     key={c.id}
                     className="border-b border-white/5 hover:bg-white/3 transition-colors"

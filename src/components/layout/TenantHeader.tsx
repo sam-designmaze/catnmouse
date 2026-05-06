@@ -21,7 +21,7 @@ export function TenantHeader({ title }: { title?: string }) {
 
   return (
     <header className="h-16 flex items-center justify-between px-6 border-b border-white/8 bg-[#0a0e27]/60 backdrop-blur-md shrink-0">
-      <h1 className="text-white font-semibold text-lg">{title}</h1>
+      <h1 className="text-white font-bold text-xl">{title}</h1>
 
       <div className="flex items-center gap-1">
         {[

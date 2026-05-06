@@ -8,7 +8,7 @@ export default async function InvoicesPage() {
   const session = await getServerSession(authOptions);
   const tenantId = session!.user.tenantId!;
 
-  const [invoices, clients] = await Promise.all([
+  const [invoices, clients, services] = await Promise.all([
     prisma.invoice.findMany({
       where: { tenantId },
       orderBy: { createdAt: "desc" },
@@ -18,11 +18,15 @@ export default async function InvoicesPage() {
       where: { tenantId },
       select: { id: true, name: true, email: true },
     }),
+    prisma.service.findMany({
+      where: { tenantId, active: true },
+      select: { id: true, name: true, price: true },
+    }),
   ]);
 
   return (
     <PageShell title="Invoices">
-      <InvoicesSection initialInvoices={invoices} clients={clients} />
+      <InvoicesSection initialInvoices={invoices} clients={clients} services={services} />
     </PageShell>
   );
 }

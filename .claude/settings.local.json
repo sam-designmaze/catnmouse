@@ -12,7 +12,24 @@
       "Bash(curl -s \"http://localhost:3000/api/referrals\" -H \"Cookie: next-auth.session-token=test\")",
       "Bash(curl -s \"http://localhost:3000/api/forms\")",
       "Bash(npx tsc *)",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(Get-ChildItem -Path \"D:\\\\Projects\\\\catnmouse\" -Depth 2)",
+      "Bash(Select-Object Name, FullName)",
+      "PowerShell($env:DATABASE_URL = \"file:./prisma/dev.db\"; npx prisma db push --skip-generate)",
+      "PowerShell($env:DATABASE_URL = \"file:./prisma/dev.db\"; npx prisma db seed)",
+      "Bash(npm install *)",
+      "PowerShell($env:DATABASE_URL = \"file:./prisma/dev.db\"; npx prisma migrate dev --name add_stripe_fields --skip-generate)",
+      "PowerShell(npm run *)",
+      "PowerShell($env:DATABASE_URL = \"file:./prisma/dev.db\"; npx prisma generate)",
+      "PowerShell(Get-Process *)",
+      "PowerShell($env:DATABASE_URL = \"file:./prisma/dev.db\"; npx prisma migrate dev --name add_form_responses --skip-generate 2>&1 | Select-Object -Last 20)",
+      "PowerShell($env:DATABASE_URL = \"file:./prisma/dev.db\"; npx prisma migrate dev --name add_webhooks_and_api_tokens --skip-generate 2>&1 | Select-Object -Last 10)",
+      "PowerShell($env:DATABASE_URL = \"file:./prisma/dev.db\"; npx prisma migrate dev --name add_service_categories --skip-generate 2>&1 | Select-Object -Last 8)",
+      "PowerShell(tail *)",
+      "PowerShell($env:DATABASE_URL = \"file:./prisma/dev.db\"; npx prisma migrate dev --name add_service_categories 2>&1)",
+      "PowerShell($env:DATABASE_URL = \"file:./prisma/dev.db\"; npx prisma generate 2>&1)",
+      "Bash(pkill -f \"next dev\")",
+      "PowerShell($env:DATABASE_URL = \"file:./prisma/dev.db\"; npx prisma migrate dev --name add_payment_gateways 2>&1 | Select-Object -First 30)"
     ]
   }
 }

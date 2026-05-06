@@ -10,7 +10,7 @@ export function GlassCard({ children, className, padding = "md" }: GlassCardProp
   return (
     <div
       className={cn(
-        "glass rounded-2xl shadow-2xl shadow-black/40",
+        "glass rounded-xl shadow-xl shadow-black/20",
         padding === "none" && "p-0",
         padding === "sm" && "p-4",
         padding === "md" && "p-6",

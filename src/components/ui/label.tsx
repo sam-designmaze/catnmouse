@@ -4,7 +4,11 @@ import { LabelHTMLAttributes } from "react";
 export function Label({ className, ...props }: LabelHTMLAttributes<HTMLLabelElement>) {
   return (
     <label
-      className={cn("block text-sm font-medium text-gray-300 mb-1.5", className)}
+      className={cn(
+        "block text-sm font-semibold text-gray-200 mb-2",
+        "dark:text-gray-200 light:text-gray-700",
+        className
+      )}
       {...props}
     />
   );

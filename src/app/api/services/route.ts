@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { name, description, price, active } = await request.json();
+  const { name, description, category, subcategory, price, active } = await request.json();
 
   if (!name || price === undefined) {
     return NextResponse.json(
@@ -54,6 +54,8 @@ export async function POST(request: Request) {
     data: {
       name,
       description: description || null,
+      category: category || "General",
+      subcategory: subcategory || null,
       price: parsedPrice,
       active: active ?? true,
       tenantId,

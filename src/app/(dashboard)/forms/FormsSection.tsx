@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { GlassCard } from "@/components/branding/GlassCard";
 import { formatDate } from "@/lib/utils";
-import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Share2, Eye } from "lucide-react";
 
 interface FormField {
   name: string;
@@ -36,6 +36,7 @@ export function FormsSection({ initialForms }: FormsSectionProps) {
   const [deleteTarget, setDeleteTarget] = useState<Form | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [viewingResponses, setViewingResponses] = useState<string | null>(null);
 
   const [name, setName] = useState("");
   const [fields, setFields] = useState<FormField[]>([]);
@@ -92,6 +93,16 @@ export function FormsSection({ initialForms }: FormsSectionProps) {
 
   function removeField(index: number) {
     setFields((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  async function handleCopyFormLink(form: Form) {
+    // Create a URL without subdomain for public form access
+    const hostname = window.location.hostname.replace(/^[^.]*\./, ''); // Remove subdomain
+    const protocol = window.location.protocol;
+    const port = window.location.port ? `:${window.location.port}` : '';
+    const url = `${protocol}//${hostname}${port}/form/${form.id}`;
+    await navigator.clipboard.writeText(url);
+    addToast("Form link copied: " + url, "success");
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -224,6 +235,22 @@ export function FormsSection({ initialForms }: FormsSectionProps) {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleCopyFormLink(f)}
+                          title="Copy form link"
+                        >
+                          <Share2 size={13} />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setViewingResponses(f.id)}
+                          title="View responses"
+                        >
+                          <Eye size={13} />
+                        </Button>
                         <Button
                           size="sm"
                           variant="ghost"
@@ -398,6 +425,82 @@ export function FormsSection({ initialForms }: FormsSectionProps) {
           </Button>
         </div>
       </Modal>
+
+      {/* Responses View Modal */}
+      {viewingResponses && (
+        <FormResponsesViewer
+          formId={viewingResponses}
+          formName={forms.find((f) => f.id === viewingResponses)?.name || ""}
+          onClose={() => setViewingResponses(null)}
+        />
+      )}
     </>
+  );
+}
+
+function FormResponsesViewer({
+  formId,
+  formName,
+  onClose,
+}: {
+  formId: string;
+  formName: string;
+  onClose: () => void;
+}) {
+  const [responses, setResponses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { addToast } = useToast();
+
+  React.useEffect(() => {
+    const fetchResponses = async () => {
+      try {
+        const res = await fetch(`/api/forms/${formId}/responses`);
+        if (!res.ok) throw new Error("Failed to fetch");
+        const data = await res.json();
+        setResponses(data);
+      } catch (error) {
+        addToast("Failed to load responses", "error");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchResponses();
+  }, [formId, addToast]);
+
+  return (
+    <Modal open={true} onClose={onClose} title={`${formName} - Responses`}>
+      <div className="max-h-96 overflow-y-auto space-y-4">
+        {loading ? (
+          <p className="text-gray-400">Loading...</p>
+        ) : responses.length === 0 ? (
+          <p className="text-gray-400">No responses yet</p>
+        ) : (
+          responses.map((response, idx) => (
+            <div
+              key={response.id}
+              className="bg-white/5 rounded-lg p-4 border border-white/10"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-medium text-gray-300">
+                  Response #{idx + 1}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {new Date(response.createdAt).toLocaleString()}
+                </p>
+              </div>
+              <div className="space-y-2">
+                {Object.entries(response.data).map(([key, value]) => (
+                  <div key={key} className="text-sm">
+                    <p className="text-gray-400">{key}:</p>
+                    <p className="text-white">{String(value)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </Modal>
   );
 }

@@ -19,30 +19,35 @@ model Tenant {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  users         User[]
-  clients       Client[]
-  orders        Order[]
-  invoices      Invoice[]
-  subscriptions Subscription[]
-  coupons       Coupon[]
-  referrals     Referral[]
-  services      Service[]
-  forms         Form[]
-  billing       TenantBilling?
+  users            User[]
+  clients          Client[]
+  orders           Order[]
+  invoices         Invoice[]
+  subscriptions    Subscription[]
+  coupons          Coupon[]
+  referrals        Referral[]
+  services         Service[]
+  forms            Form[]
+  billing          TenantBilling?
+  webhooks         Webhook[]
+  apiTokens        ApiToken[]
+  paymentGateways  PaymentGateway[]
 }
 
 model TenantBilling {
-  id              String    @id @default(cuid())
-  tenantId        String    @unique
-  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  plan            String    @default("STARTER")
-  monthlyRate     Float     @default(99)
-  status          String    @default("ACTIVE")
-  nextBillingDate DateTime
-  lastPaymentDate DateTime?
-  paymentMethod   String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id                   String    @id @default(cuid())
+  tenantId             String    @unique
+  tenant               Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  plan                 String    @default("STARTER")
+  monthlyRate          Float     @default(99)
+  status               String    @default("ACTIVE")
+  nextBillingDate      DateTime
+  lastPaymentDate      DateTime?
+  paymentMethod        String?
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 }
 
 model Admin {
@@ -113,17 +118,19 @@ model Order {
 }
 
 model Invoice {
-  id            String   @id @default(cuid())
-  invoiceNumber String
-  clientId      String
-  client        Client   @relation(fields: [clientId], references: [id])
-  tenantId      String
-  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  status        String   @default("DRAFT")
-  amount        Float
-  dueDate       DateTime
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id                    String   @id @default(cuid())
+  invoiceNumber         String
+  clientId              String
+  client                Client   @relation(fields: [clientId], references: [id])
+  tenantId              String
+  tenant                Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  status                String   @default("DRAFT")
+  amount                Float
+  dueDate               DateTime
+  stripePaymentLinkId   String?
+  paidAt                DateTime?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }
 
 model Subscription {
@@ -166,15 +173,17 @@ model Referral {
 }
 
 model Service {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  price       Float
-  active      Boolean  @default(true)
-  tenantId    String
-  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  category      String   @default("General")
+  subcategory   String?
+  price         Float
+  active        Boolean  @default(true)
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   orders Order[]
 }
@@ -188,4 +197,54 @@ model Form {
   tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  responses FormResponse[]
+}
+
+model FormResponse {
+  id        String   @id @default(cuid())
+  formId    String
+  form      Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+  data      String
+  createdAt DateTime @default(now())
+}
+
+model Webhook {
+  id       String   @id @default(cuid())
+  url      String
+  secret   String
+  events   String   @default("[]")
+  active   Boolean  @default(true)
+  tenantId String
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([tenantId, url])
+}
+
+model ApiToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  name      String
+  scopes    String   @default("[]")
+  lastUsed  DateTime?
+  active    Boolean  @default(true)
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model PaymentGateway {
+  id           String    @id @default(cuid())
+  tenantId     String
+  tenant       Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  provider     String    // "stripe" or "paypal"
+  accessToken  String
+  refreshToken String?
+  expiresAt    DateTime?
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([tenantId, provider])
 }

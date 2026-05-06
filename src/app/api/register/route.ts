@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 import { getTenantBySubdomain } from "@/lib/tenant";
+import { registerRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -10,6 +11,17 @@ export async function POST(request: NextRequest) {
 
   if (!email || !password || password.length < 6) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+  }
+
+  // Rate limiting by IP address
+  const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
+  const { success } = await registerRateLimit.check(ip);
+
+  if (!success) {
+    return NextResponse.json(
+      { error: "Too many registration attempts. Please try again later." },
+      { status: 429 }
+    );
   }
 
   const headersList = await headers();

@@ -2,6 +2,47 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { getTenantFromHeaders } from "@/lib/tenant";
+
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+
+  // Get tenant from subdomain
+  const tenant = await getTenantFromHeaders();
+  if (!tenant) {
+    return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
+  }
+
+  // Try to find by ID first
+  let form = await prisma.form.findFirst({
+    where: { id, tenantId: tenant.id, active: true },
+  });
+
+  // If not found by ID, try to find by name (slug match)
+  if (!form) {
+    form = await prisma.form.findFirst({
+      where: {
+        tenantId: tenant.id,
+        active: true,
+        name: {
+          contains: id.replace(/^form-/, "").replace(/-/g, " "),
+        },
+      },
+    });
+  }
+
+  if (!form) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  return NextResponse.json({
+    ...form,
+    fields: JSON.parse(form.fields),
+  });
+}
 
 export async function PATCH(
   req: Request,

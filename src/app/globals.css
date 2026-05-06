@@ -19,13 +19,78 @@
   box-sizing: border-box;
 }
 
-html,
-body {
+html {
   background: #0a0e27;
   color: #f9fafb;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html.light {
+  background: #ffffff;
+  color: #1f2937;
+}
+
+html.light {
+  --color-background: #ffffff;
+  --color-surface: #f3f4f6;
+  --color-foreground: #111827;
+  --color-muted: #6b7280;
+}
+
+body {
   font-family: var(--font-sans, system-ui, sans-serif);
   min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
+  line-height: 1.6;
+}
+
+/* Typography improvements */
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+h1 {
+  font-size: 2rem;
+}
+
+h2 {
+  font-size: 1.5rem;
+}
+
+h3 {
+  font-size: 1.25rem;
+}
+
+h4 {
+  font-size: 1.125rem;
+}
+
+p {
+  line-height: 1.7;
+}
+
+/* Light mode adjustments */
+html.light h1,
+html.light h2,
+html.light h3,
+html.light h4,
+html.light h5,
+html.light h6 {
+  color: #0f172a;
+}
+
+html.light p {
+  color: #374151;
+}
+
+html.light a {
+  color: var(--tenant-primary);
+}
+
+html.light a:hover {
+  opacity: 0.8;
 }
 
 .glass {
@@ -35,6 +100,11 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+html.light .glass {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
 .glass-strong {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(16px);
@@ -42,13 +112,32 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-::-webkit-scrollbar {
-  width: 6px;
+html.light .glass-strong {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(0, 0, 0, 0.15);
 }
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.15);
-  border-radius: 3px;
+  border-radius: 4px;
+}
+
+html.light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
 }
